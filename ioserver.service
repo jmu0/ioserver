@@ -1,0 +1,12 @@
+[Service]
+ExecStart=/usr/bin/node /var/local/node/ioserver/ioserver.js
+Restart=always
+StandardOutput=syslog
+SyslogIdentifier=ioserver
+User=jos
+Group=users
+Environment=PATH=/usr/bin:/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
