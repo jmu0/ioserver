@@ -42,6 +42,7 @@ module.exports = {
         nodo.write(data);
     },
     kaku: function(command) {
+        command=command.replace("=", ",");
         command = "newkakusend "+command;
         if (command.substr(command.length -1) !== "\n") { command += "\n"; }
         console.log('nodo kaku: '+command);
