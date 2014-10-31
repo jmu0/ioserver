@@ -55,9 +55,10 @@ connectNodo();
  * 11 = dimmer multi achter tv
  * 12 = dimmer staande lamp
  *
- *
  * 15=lamp kamer 1
  * 16=lamp kamer 2
+ *
+ * 20=lamp keuken
  *
  */
 
