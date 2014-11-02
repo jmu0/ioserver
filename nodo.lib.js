@@ -36,6 +36,10 @@ function connectNodo() {
     }, 2000);
 }
 
+var lastCommand = Date.now();
+var interval = 800;
+var time = 0;
+
 module.exports = {
     write: function(data) {
         if (data.substr(data.length -1) !== "\n") { data += "\n"; }
@@ -45,8 +49,22 @@ module.exports = {
         command=command.replace("=", ",");
         command = "newkakusend "+command;
         if (command.substr(command.length -1) !== "\n") { command += "\n"; }
-        console.log('nodo kaku: '+command);
-        nodo.write(command);
+
+        time=(lastCommand+interval) - Date.now();
+        if (time < 1) { time=1;}
+        /*
+        console.log(lastCommand);
+        console.log(lastCommand+interval);
+        console.log(Date.now());
+        console.log((lastCommand+interval) - Date.now());
+        console.log('time: '+time);
+        */
+        lastCommand = Date.now() + time;
+        //console.log(lastCommand);
+        setTimeout(function(){
+            //console.log('nodo write: ' + command);
+            nodo.write(command);
+        }, time);
     }
 };
 connectNodo();
