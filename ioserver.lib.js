@@ -1,3 +1,4 @@
+/*jslint todo: true */
 module.exports = {
     sockets: [],
     devices: [],
@@ -55,29 +56,16 @@ module.exports = {
                 break;
                 case 'nodo':
                     var i;
-                var com="";
-                for (i=1; i<cmd.length; i++){
-                    com += cmd[i] + " ";
-                }
-                this.nodo.write(com);
+                    var com="";
+                    for (i=1; i<cmd.length; i++){
+                        com += cmd[i] + " ";
+                    }
+                    this.nodo.write(com);
                 break;
                 case 'pc':
-                    var host = cmd[1];
-                switch (cmd[2]){
-                    case 'ping':
-                        this.pc.ping(host,function(data) {
-                        socket.write(host+" "+data + "\n");
+                    this.pc.command(cmd, function(data) {
+                        socket.write('update pc ' + data);
                     });
-                    break;
-                    case 'wake':
-                        this.pc.wake(host);
-                    break;
-                    case 'shutdown': 
-                        this.pc.shutdown(host);
-                    break;
-                    default: 
-                        break;
-                }
                 break;
                 default:
                     console.log("ERROR: Unknown command: " + data);
@@ -179,7 +167,7 @@ module.exports = {
     requestStatus: function(device, from) {
         var dev = this.getDeviceByName(device);
         dev.socket = this.getSocketByName(dev.socketname);
-        console.log(dev);
+        //DEBUG: console.log(dev);
         var line;
         if(dev) {
             dev.socket.write("requeststatus " + device + " " + from + "\n");

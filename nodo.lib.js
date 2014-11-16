@@ -12,6 +12,16 @@ function nodoData(data) {
         //DEBUG: console.log(JSON.stringify(data));
         console.log("nodo: "+data);
         //TODO: events van nodo verwerken??
+        /* via telnet een event aan nodo toevoegen:
+         * EventlistShow = laat alle events zien
+         * EventlistErase = leegmaken
+         * EventlistWrite; WildCard ALL,ALL; EventSend HTTP
+         * dan komen alle events hier binnen.
+         * 
+         * om ir signalen te ontvangen: RawSignalReceive On
+         * 
+         *
+         */
     }
 }
 function nodoError(error) {
