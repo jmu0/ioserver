@@ -25,16 +25,16 @@ module.exports = {
                 break;
                 case 'setcontrol':
                     if (cmd[1] === 'kaku') {
-                    this.nodo.kaku(cmd[2]);
-                } else {
-                    this.setControl(cmd[1],cmd[2],socket);
-                }
-                //update commando naar logicserver sturen
-                logic = this.getDeviceByName('logic');
-                if (logic) {
-                    sock = this.getSocketByName(logic.socketname);
-                    if (sock) { sock.write('update ' + cmd[1]+ " " + cmd[2] + "\n"); }
-                }
+                        this.nodo.kaku(cmd[2]);
+                    } else {
+                        this.setControl(cmd[1],cmd[2],socket);
+                    }
+                    //update commando naar logicserver sturen
+                    logic = this.getDeviceByName('logic');
+                    if (logic) {
+                        sock = this.getSocketByName(logic.socketname);
+                        if (sock) { sock.write('update ' + cmd[1]+ " " + cmd[2] + "\n"); }
+                    }
                 break;
                 case 'requeststatus':
                     this.requestStatus(cmd[1],cmd[2]);
@@ -190,13 +190,12 @@ module.exports = {
         var ret = this.getSocketBySocket(socket);
         var line;
         if (dev) {
-            dev.socket.write(status);
-            console.log(status);
-        }
-        else {
+            dev.socket.write("returnstatus " + status);
+            //DEBUG: console.log(status);
+        } else {
             if (device === "this" || device === "server") {
                 line = '{"name":"'+ret.name+'","status":'+status+'}';
-                console.log(line);
+                //DEBUG: console.log(line);
             }
             else {
                 line = "ERROR: device '"+device+"' not found.\n";
