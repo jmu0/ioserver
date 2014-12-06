@@ -1,26 +1,36 @@
 /*jslint todo: true */
+/*global ioserver */
 var net = require('net');
-var nodo;
+var nodo, logic, sock;
 var nodoname = 'nodo.muysers.nl';
 var nodoport = 23;
 var checkinterval;
 
 
 function nodoData(data) {
-    //let op: data = array met ascii codes
     if (data[0] !== 10 && data[0]!==13&&data[0]!==33&&data[0]!==62) { //10=line feed,13=carriage return,33=!,62=>
-        //DEBUG: console.log(JSON.stringify(data));
-        console.log("nodo: "+data);
-        //TODO: events van nodo verwerken??
-        /* via telnet een event aan nodo toevoegen:
+        data = String(data); //data = array met ascii codes
+        console.log('nodo: '+data);
+        if (data.indexOf('Input') === 0 && data.indexOf('HTTP') === -1) {
+            data=data.split('; ');
+            data = data[2].split('=')[1];
+            data = data.replace('NewKAKU', 'kaku').replace(',','=');
+            logic = process.ioserver.getDeviceByName('logic');
+            if (logic) {
+                sock = process.ioserver.getSocketByName(logic.socketname);
+                if (sock) { 
+                    sock.write('event ' + data + "\n"); 
+                }
+            } else {
+                console.log('logic niet gevonden');
+            }
+        }
+        /* NODO via telnet een event aan nodo toevoegen:
          * EventlistShow = laat alle events zien
          * EventlistErase = leegmaken
          * EventlistWrite; WildCard ALL,ALL; EventSend HTTP
          * dan komen alle events hier binnen.
-         * 
          * om ir signalen te ontvangen: RawSignalReceive On
-         * 
-         *
          */
     }
 }
@@ -63,12 +73,12 @@ module.exports = {
         time=(lastCommand+interval) - Date.now();
         if (time < 1) { time=1;}
         /*
-        console.log(lastCommand);
-        console.log(lastCommand+interval);
-        console.log(Date.now());
-        console.log((lastCommand+interval) - Date.now());
-        console.log('time: '+time);
-        */
+           console.log(lastCommand);
+           console.log(lastCommand+interval);
+           console.log(Date.now());
+           console.log((lastCommand+interval) - Date.now());
+           console.log('time: '+time);
+           */
         lastCommand = Date.now() + time;
         //console.log(lastCommand);
         setTimeout(function(){

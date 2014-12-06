@@ -2,14 +2,13 @@ var net = require('net');
 
 var host = '0.0.0.0';
 var port = 9999;
-var ioserver = require('./ioserver.lib.js');
+process.ioserver = require('./ioserver.lib.js');
 var linebuffer="";
-
 
 //create server and listen on port
 net.createServer(function(socket){
         console.log('connected: '+socket.remoteAddress+':'+socket.remotePort);
-        ioserver.addSocket(socket);
+        process.ioserver.addSocket(socket);
         socket.on('data', function(data){
                 var commands, i;
                 linebuffer += data;
@@ -17,13 +16,13 @@ net.createServer(function(socket){
                 {
                     commands = linebuffer.split("\n");
                     for (i = 0; i < commands.length; i++) {
-                        ioserver.doCommand(commands[i], socket);
+                        process.ioserver.doCommand(commands[i], socket);
                     }
                     linebuffer = "";
                 }
             });
         socket.on('close', function(data){
-                ioserver.removeSocket(socket);
+                process.ioserver.removeSocket(socket);
                 var ip = socket._peername.address;
                 console.log(ip + ': connection closed: ' + data);
             });

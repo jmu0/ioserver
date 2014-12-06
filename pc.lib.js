@@ -1,5 +1,5 @@
 /*jslint todo: true */
-/*global ioserver */
+
 var shell = { 
     exec: require('child_process').exec,
     callback: undefined,
