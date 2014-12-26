@@ -1,349 +1,117 @@
 /*jslint todo: true */
+/*TODO: een aparte 'socket-host' maken. dit werkt niet meer samen met pc/nodo libs.
+ * de socket-host ontvangt/verstuurd berichten, ook van de logicserver
+ * een protokol voor deze berichten bedenken.
+ * een publish/subscribe patroon maken waar alle verschillende modules (arduino, pc, nodo, ....) mee communiceren.
+ *
+ */
+
 module.exports = {
-    sockets: [],
-    devices: [],
-    nodo: require('./nodo.lib.js'),
-    pc: require('./pc.lib.js'),
+    handlers: {},
+    on: function(message, callback) {
+        if (this.handlers[message] === undefined) {
+            this.handlers[message] = [];
+        }
+        this.handlers[message].push(callback);
+    },
+    publish: function(message, data){
+        //DEBUG:  console.log('Publish message: ' + message); console.log(data);
+        if (this.handlers[message] !== undefined){
+            this.handlers[message].forEach(function(handler){
+                handler(data);
+            });
+        }
+    },
+    nodo: undefined, //require('./nodo.lib.js'),
+    pc: undefined, //require('./pc.lib.js'),
+    socket: undefined, //require('./socekt.lib.js'),
+    init: function(){
+        this.nodo = require('./nodo.lib.js');
+        this.pc = require('./pc.lib.js');
+        this.socket = require('./socket.lib.js');
+    },
     doCommand: function(data, socket) {
-        var logic, sock;
+        //DEBUG: console.log("doCommand: " +data);
+        var cmd = this.parseCmd(data);
+        data = this.parseData(data,socket);
+        if (cmd.length > 0) {
+            this.publish(cmd, data);
+        }
+    },
+    parseCmd: function(data){
+        data = data.replace(/(\r\n|\n|\r)/gm,"").trim();
+        var cmd = data.split(" ");
+        cmd = cmd[0];
+        return cmd;
+    },
+    parseData: function(data, socket) {
+        //var logic, sock;
+        var ret = {};
         if ((data.length > 0) && (data !== "\r\n")){
-            data = data.replace(/(\r\n|\n|\r)/gm,"");
-            console.log("doCommand: " +data);
-            var cmd = data.split(" ");
-            switch (cmd[0]) {
-                case 'init':
-                    this.initDevice(cmd[1], socket);
-                break;
-                case 'remove':
-                    this.removeDevice(cmd[1]);
-                break;
-                case 'sockets':
-                    this.printSocketList(socket);
-                break;
-                case 'devices':
-                    this.printDeviceList(socket);
-                break;
-                case 'setcontrol':
-                    if (cmd[1] === 'kaku') {
-                        this.nodo.kaku(cmd[2]);
-                    } else {
-                        this.setControl(cmd[1],cmd[2],socket);
-                    }
-                    //update commando naar logicserver sturen
-                    logic = this.getDeviceByName('logic');
-                    if (logic) {
-                        sock = this.getSocketByName(logic.socketname);
-                        if (sock) { sock.write('update ' + cmd[1]+ " " + cmd[2] + "\n"); }
-                    }
-                break;
-                case 'requeststatus':
-                    this.requestStatus(cmd[1],cmd[2]);
-                break;
-                case 'returnstatus':
-                    this.returnStatus(cmd[1],socket,cmd[2]);
-                break;
-                case 'setevent':
-                    this.setEvent(cmd[1],cmd[2] + " " + cmd[3],socket);
-                break;
-                case 'resetevent':
-                    this.resetEvent(cmd[1],cmd[2] + " " + cmd[3],socket);
-                break;
-                case 'event':
-                    this.event(cmd[2]+" "+cmd[3],cmd[1]);
-                break;
-                case 'broadcast':
-                    this.broadcast(data.replace(cmd[0], ""));
-                break;
-                case 'nodo':
-                    var i;
-                    var com="";
-                    for (i=1; i<cmd.length; i++){
-                        com += cmd[i] + " ";
-                    }
-                    this.nodo.write(com);
-                break;
-                case 'pc':
-                    this.pc.command(cmd, function(data) {
-                        socket.write('update pc ' + data);
-                    });
-                break;
-                default:
-                    console.log("ERROR: Unknown command: " + data);
-                break;
-            }
-        }
-    },
-    getDeviceIDByName: function(name) {
-        var i;
-        for(i=0; i < this.devices.length; i++) {
-            if (this.devices[i].name === name) {
-                return i;
-            }
-        }
-        return -1;
-    },
-    getDeviceByName: function(name) {
-        var i;
-        for(i=0; i < this.devices.length; i++) {
-            if (this.devices[i].name === name) {
-                return this.devices[i];
-            }
-        }
-        return false;
-    },
-    getSocketByName: function(name) {
-        var i;
-        for(i=0; i<this.sockets.length;i++) {
-            if (this.sockets[i].name === name){
-                return this.sockets[i];
-            }
-        }
-        return false;
-    },
-    getSocketBySocket: function(socket) {
-        var d;
-        for(d=0; d<this.sockets.length; d++) {
-            if (this.sockets[d].socket === socket){
-                return this.sockets[d];
-            }
-        }
-        return false;
-    },
-    getSocketIDBySocket: function(socket) {
-        var d;
-        for(d=0; d<this.sockets.length; d++) {
-            if (this.sockets[d].socket === socket){
-                return d;
-            }
-        }
-        return -1;
-    },
-    getSocketByIP: function(ip) {
-        var d;
-        for(d=0; d<this.sockets.length; d++) {
-            if (this.sockets[d].ip === ip){
-                return this.sockets[d];
-            }
-        }
-        return false;
-    },
-    getSocketByID: function(id) {
-        return this.sockets[id].socket;
-    },
-    printSocketList: function(socket) {
-        var d,line;
-        for(d=0; d < this.sockets.length; d++) {
-            line = "socket name: " + this.sockets[d].name + ", ip: " + this.sockets[d].ip;
-            line += ", port: " + this.sockets[d].port;
-            console.log(line);
-            socket.write(line + "\n");
-        }
-    },
-    printDeviceList: function(socket) {
-        var d,line;
-        for(d=0; d < this.devices.length; d++) {
-            line = "device name: " + this.devices[d].name + ", socketname: " + this.devices[d].socketname;
-            console.log(line);
-            socket.write(line + "\n");
-        }
-    },
-    setControl: function(device, command, socket) {
-        var dev = this.getDeviceByName(device);
-        dev.socket = this.getSocketByName(dev.socketname);
-        var line;
-        if(dev) {
-            if (dev.socket !== undefined) {
-                dev.socket.write("setcontrol " + device + " " +command + "\n");
-            } else { 
-                console.log("SOCKET ERROR: " + dev.socketname);
-            }
-        }
-        else {
-            line = "ERROR: device '"+device+"' not found.\n";
-            console.log(line);
-            socket.write(line);
-        }
-    },
-    requestStatus: function(device, from) {
-        var dev = this.getDeviceByName(device);
-        dev.socket = this.getSocketByName(dev.socketname);
-        //DEBUG: console.log(dev);
-        var line;
-        if(dev) {
-            dev.socket.write("requeststatus " + device + " " + from + "\n");
-            line = "Status request sent to: " + dev.name + ", from: " + from + "\n";
-            console.log(line);
-        }
-        else {
-            line = "ERROR: device '"+device+"' not found.\n";
-            console.log(line);
-            var fromdev = this.getDeviceByName(from);
-            if (fromdev) {
-                fromdev.socket = this.getSocketByName(fromdev.socketname);
-                fromdev.socket.write(line);
-            }
-        }
-    },
-    returnStatus: function(device, socket, status) {
-        var dev = this.getDeviceByName(device);
-        dev.socket = this.getSocketByName(dev.socketname);
-        var ret = this.getSocketBySocket(socket);
-        var line;
-        if (dev) {
-            dev.socket.write("returnstatus " + status);
-            //DEBUG: console.log(status);
-        } else {
-            if (device === "this" || device === "server") {
-                line = '{"name":"'+ret.name+'","status":'+status+'}';
-                //DEBUG: console.log(line);
-            }
-            else {
-                line = "ERROR: device '"+device+"' not found.\n";
-                console.log(line);
-                socket.write(line);
-            }
-        }
-    },
-    setEvent: function(device, event, socket) {
-        var dev = this.getDeviceByName(device);
-        dev.socket = this.getSocketByName(dev.socketname);
-        var line;
-        if(dev) {
-            dev.socket.write("setevent " + device + " " + event + "\n");
-            line = "Set event: '"+event+"' on: "+device+"\n";
-            console.log(line);
-            //socket.write(line);
-        }
-        else {
-            line = "ERROR: device '"+device+"' not found.\n";
-            console.log(line);
-            socket.write(line);
-        }
-    },
-    resetEvent: function(device, event, socket) {
-        var dev = this.getDeviceByName(device);
-        dev.socket = this.getSocketByName(dev.socketname);
-        var line;
-        if(dev) { 
-            dev.socket.write("resetevent " + device + " " + event + "\n");
-            line = "Reset event: '"+event+"' on: "+device+"\n";
-            console.log(line);
-            //socket.write(line);
-        }
-        else {
-            line = "ERROR: device '"+device+"' not found.\n";
-            console.log(line);
-            socket.write(line);
-        }
-    },
-    event: function(event, devicename) {
-        var dev = this.getDeviceByName(devicename);
-        var line, sock;
-        if (dev) {
-            line = "Event: " + event + " on " + dev.name;
-            var logic = this.getDeviceByName('logic');
-            if (logic) {
-                sock = this.getSocketByName(logic.socketname);
-                sock.write('event ' + dev.name + " " + event);
-            }
-            console.log(line);
-        }
-        else {
-            line = "ERROR (event): device '"+dev.name+"' not found.\n";
-            console.log(line);
-        }
-    },
-    broadcast: function(data) {
-        var s;
-        for(s=0; s < this.sockets.length; s++) {
-            console.log("broadcast: "+data+"\n");
-            this.sockets[s].write("broadcast: "+data);
-        }
-    },
-    initDevice: function(name, socket) {
-        var logic, sock;
-        var device = { 'name': name, 'socketname': this.getSocketBySocket(socket).name };
-        var id = this.getDeviceIDByName(name);
-        if (id === -1) {
-            this.devices[this.devices.length] = device;
-        } else {
-            this.devices[id] = device;
-        }
-        if (name !== 'logic') {
-            logic = this.getDeviceByName('logic');
-            if (logic) {
-                sock = this.getSocketByName(logic.socketname);
-                sock.write('init ' + name + "\n");
-            }
-        } else {
-            var i; 
-            for (i = 0; i < this.devices.length; i++) {
-                if (this.devices[i].name !== 'logic') {
-                    socket.write('init ' + this.devices[i].name + "\n");
+            data = data.replace(/(\r\n|\n|\r)/gm,"").trim();
+            //DEBUG: console.log(data);
+            var firstspace = data.indexOf(' ');
+            //DEBUG console.log("firstspace: " + firstspace + " eerste:" + data.substr(firstspace + 1, 1));
+            if (data.substr(firstspace + 1, 1) === "{") { //is json
+                var json = data.substr(firstspace + 1);
+                //DEBUG console.log("json: :" + json + ":");
+                try {
+                    ret = JSON.parse(json);
+                } catch (error) {
+                    console.log("ERROR: ongeldige json: "+json);
                 }
-            }
-        }
-        console.log("initialized " + name);
-    },
-    removeDevice: function(name) {
-        var i;
-        for (i = 0; i < this.devices.length; i++) {
-            if (this.devices[i].name === name) {
-                this.devices.splice(i,1);
-                console.log("removed " + name);
-                return 0;
-            }
-        }
-        console.log("ERROR: remove device: " + name + " not found!");
-        return 1;
-    },
-    addSocket: function(socket) {
-        socket.setKeepAlive(true);
-        var db = require('./database.js');
-        var ip = socket._peername.address;
-        var port = socket._peername.port;
-        var dit = this;
-        var d;
-        var device = { 'ip':ip,'port':port,'name':ip+":"+port,'socket':socket, 'locked':false };
-        db.getHostNameByIP(ip, function(name) {
-            //gethostname heeft vertraging. bij connect > init is de socket nog niet toegevoegd. daarom hostname updaten:
-            var oldname=ip+":"+port;
-            var newname=name+":"+port;
-            for (d = 0; d < dit.sockets.length; d++) {
-                if (dit.sockets[d].name=== oldname) {
-                    dit.sockets[d].name = newname;
+            } else { //no json, make backwards compatible
+                var cmd = data.split(" ");
+                switch (cmd[0]) {
+                    case 'init':
+                    case 'remove':
+                        ret.device = cmd[1];
+                    break;
+                    case 'setcontrol':
+                        if (cmd[1] === 'kaku') {
+                            ret.type='kaku';
+                            ret.device = 'kaku';
+                            ret.command=cmd[2];
+                        } else {
+                            ret.type='socket';
+                            ret.device=cmd[1];
+                            ret.command=cmd[2];
+                        }
+                    break;
+                    case 'requeststatus':
+                        ret.to = cmd[1];
+                        ret.from = cmd[2];
+                    break;
+                    case 'returnstatus':
+                        ret.to = cmd[1];
+                        ret.status = cmd[2];
+                    break;
+                    case 'setevent':
+                    case 'resetevent':
+                    case 'event':
+                        ret.device = cmd[1];
+                        ret.event = cmd[2] + " " + cmd[3];
+                    break;
+                    case 'broadcast':
+                        ret.message = data.replace(cmd[0], "");
+                    break;
+                    case 'nodo':
+                        var i;
+                        ret.command = "";
+                        for (i=1; i<cmd.length; i++){
+                            ret.command += cmd[i] + " ";
+                        }
+                    break;
+                    case 'pc':
+                        ret.command = cmd;
+                    break;
+                    default:
+                        console.log("ERROR: Unknown command: " + data);
+                    break;
                 }
-            }
-            for (d = 0; d < dit.devices.length; d++) {
-                if (dit.devices[d].socketname === oldname) {
-                    dit.devices[d].socketname = newname;
-                }
-            }
-        });
-        device.write=function(data) {
-            this.socket.write(data);
-        };
-        for (d = 0; d < dit.sockets.length; d++) {
-            if ((dit.sockets[d].ip === ip) && (dit.sockets[d].port === port)) {
-                dit.sockets.splice(d,1);
-            }
+            } 
         }
-        dit.sockets[dit.sockets.length] = device;
-        //console.log(this.sockets);
-    },
-    removeSocket: function(socket) {
-        var ip = socket._peername.address;
-        var port = socket._peername.port;
-        var i, j;
-        for(i=0; i < this.sockets.length; i++) {
-            if ((this.sockets[i].ip === ip) && (this.sockets[i].port === port)){
-                for (j = 0; j < this.devices.length; j++) {
-                    if (this.devices[j].socketname === this.sockets[i].name) {
-                        this.devices.splice(j,1);
-                    }
-                }
-                this.sockets.splice(i,1);
-            }
-        }
+        ret.socket=socket;
+        return ret;
     }
 };

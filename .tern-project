@@ -1,0 +1,1 @@
+{"libs":["browser","jquery","node"],"loadEagerly":["/home/jos/ioserver/database.js","/home/jos/ioserver/ioserver.js","/home/jos/ioserver/ioserver.lib.js","/home/jos/ioserver/nodo.lib.js","/home/jos/ioserver/pc.lib.js"],"plugins":{"requirejs":{"baseURL":"./","paths":{}}}}

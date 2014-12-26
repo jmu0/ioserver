@@ -15,6 +15,8 @@ function nodoData(data) {
             data=data.split('; ');
             data = data[2].split('=')[1];
             data = data.replace('NewKAKU', 'kaku').replace(',','=');
+            process.ioserver.publish('event', { iodevice: 'kaku', ioevent: data });
+            /*
             logic = process.ioserver.getDeviceByName('logic');
             if (logic) {
                 sock = process.ioserver.getSocketByName(logic.socketname);
@@ -24,6 +26,7 @@ function nodoData(data) {
             } else {
                 console.log('logic niet gevonden');
             }
+            */
         }
         /* NODO via telnet een event aan nodo toevoegen:
          * EventlistShow = laat alle events zien
@@ -60,19 +63,20 @@ var lastCommand = Date.now();
 var interval = 800;
 var time = 0;
 
-module.exports = {
+var nodolib = {
     write: function(data) {
+        console.log('WRITIIING!!');
         if (data.substr(data.length -1) !== "\n") { data += "\n"; }
         nodo.write(data);
     },
-    kaku: function(command) {
-        command=command.replace("=", ",");
+    kaku: function(cmd) {
+        var command=cmd.replace("=", ",");
         command = "newkakusend "+command;
         if (command.substr(command.length -1) !== "\n") { command += "\n"; }
 
         time=(lastCommand+interval) - Date.now();
         if (time < 1) { time=1;}
-        /*
+        /* DEBUG: 
            console.log(lastCommand);
            console.log(lastCommand+interval);
            console.log(Date.now());
@@ -80,14 +84,29 @@ module.exports = {
            console.log('time: '+time);
            */
         lastCommand = Date.now() + time;
-        //console.log(lastCommand);
+        //DEBUG: console.log(lastCommand);
         setTimeout(function(){
-            //console.log('nodo write: ' + command);
+            //DEBUG: console.log('nodo write: ' + command);
             nodo.write(command);
+            cmd = cmd.split("=");
+            process.ioserver.publish('update', { "iodevice": "kaku", "iocontrol": cmd[0], "value": cmd[1] });
         }, time);
     }
 };
 connectNodo();
+
+process.ioserver.on('setcontrol', function(data){
+    //DEBUG: console.log('SETCONTROL in kaku lib');
+    //DEBUG: console.log(data);
+    if (data.type === 'kaku') {
+        nodolib.kaku(data.command);
+    }
+});
+process.ioserver.on('nodo', function(data){
+    nodolib.write(data.command);
+});
+
+module.exports = nodolib;
 /*KAKU codes:
  * 1 = een stopcontact
  * 11 = dimmer multi achter tv
