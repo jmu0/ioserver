@@ -169,14 +169,17 @@ var socketlib = {
     event: function(event, devicename) {
         //send event to logicserver
         var dev = this.getDeviceByName(devicename);
-        var sock;
+        //OUD: var sock;
         if (dev) {
+            process.ioserver.publish('event', { iodevice: devicename, ioevent: event });
+            /*OUD
             var logic = this.getDeviceByName('logic');
             if (logic) {
                 sock = this.getSocketByName(logic.socketname);
                 sock.write('event {"iodevice":"' + dev.name + '","event":"' + event + '"}\n');
             }
             console.log("Event: " + event + " on " + dev.name);
+            */
         }
         else {
             console.log("ERROR (event): device '"+dev.name+"' not found.\n");
@@ -330,4 +333,13 @@ process.ioserver.on('pong', function(data){
         if (sock) { sock.write('pong {"host":"'+data.host+'","pong":"' + data.pong +'"}\n'); }
     }
 });
+process.ioserver.on('event', function(data){
+    //send update command to logicserver
+    var logic = socketlib.getDeviceByName('logic');
+    if (logic) {
+        var sock = socketlib.getSocketByName(logic.socketname);
+        if (sock) { sock.write('pong {"iodevice":"'+data.iodevice + '","ioevent":"' + data.ioevent+'"}\n'); }
+    }
+});
+
 module.exports = socketlib;
