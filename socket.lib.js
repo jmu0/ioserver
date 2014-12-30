@@ -322,4 +322,12 @@ process.ioserver.on('update', function(data){
         if (sock) { sock.write('update {"device":"'+data.device+'","command":"' + data.command +'"}\n'); }
     }
 });
+process.ioserver.on('pong', function(data){
+    //send update command to logicserver
+    var logic = socketlib.getDeviceByName('logic');
+    if (logic) {
+        var sock = socketlib.getSocketByName(logic.socketname);
+        if (sock) { sock.write('pong {"host":"'+data.host+'","pong":"' + data.pong +'"}\n'); }
+    }
+});
 module.exports = socketlib;

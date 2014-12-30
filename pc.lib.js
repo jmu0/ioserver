@@ -38,67 +38,43 @@ var pclib = {
      */
     //command: function(cmd, callback) {
     command: function(cmd) {
-        var host = cmd[1];
-        switch (cmd[2]) {
+        switch (cmd.command) {
             case 'ping':
-                this.ping(host, function(data) {
-                console.log(data);
-                //DEBUG:console.log(host+' ping '+data);
-                //TODO: er is geen callback nodig maar een message: callback(host + " " + data + "\n");
-            });
+                this.ping(cmd.host);
             break;
             case 'wake':
-                this.wake(host);
+                this.wake(cmd.host);
             break;
             case 'shutdown':
-                this.shutdown(host);
+                this.shutdown(cmd.host);
             break;
             case 'vlc':
-                if (cmd[3] === 'start') {
-                this.vlc.start(host);
-                console.log('start vlc on ' + host);
-            } else if (cmd[3] === 'ping') {
-                this.vlc.ping(host, function(data) {
-                    console.log(data);
-                    //DEBUG: console.log(host+" vlc ping "+data);
-                    //TODO: message: callback(host + " vlc " + data + "\n");
-                });
-            } else if (cmd[3] === 'kill') {
-                this.vlc.kill(host);
-                console.log('kill vlc on ' + host);
-            } else if (cmd[3] === 'play') {
-                var file = "";
-                for (i = 4; i < cmd.length; i++) {
-                    if (file.length > 0) {
-                        file += " ";
-                    }
-                    file += cmd[i];
-                }
-                if (file.length > 0) {
-                    this.vlc.command(host, 'play ' + file);
-                    console.log('vlc on ' + host + ': play ' + file);
+                if (cmd.vlc === 'start') {
+                this.vlc.start(cmd.host);
+                console.log('start vlc on ' + cmd.host);
+            } else if (cmd.vlc === 'ping') {
+                this.vlc.ping(cmd.host);
+            } else if (cmd.vlc === 'kill') {
+                this.vlc.kill(cmd.host);
+                console.log('kill vlc on ' + cmd.host);
+            } else if (cmd.vlc === 'play') {
+                if (cmd.file.length > 0) {
+                    this.vlc.command(cmd.host, 'play ' + cmd.file);
+                    console.log('vlc on ' + cmd.host + ': play ' + cmd.file);
                 } else {
-                    console.log('vlc on ' + host + ': no filename');
+                    console.log('vlc on ' + cmd.host + ': no filename');
                 }
-                /*
-                   } else if (cmd[3]==='queue') { //TODO: weg hiermee
-                   if (cmd[4] !== undefined) {
-                   this.vlc.queue(host, cmd[4]);
-                   console.log('vlc on '+host+': queue '+cmd[4]);
-                   } else {
-                   console.log('vlc on '+host+': file unknown: '+cmd[4]);
-                   }
-                   */
-            } else if (cmd[3] === 'requeststatus') {
-                this.vlc.requeststatus(host, function(status){
+            } else if (cmd.vlc === 'requeststatus') {
+                //TODO: dit werkt niet goed
+                this.vlc.requeststatus(cmd.host, function(status){
                     console.log(status);
                 });
             } else {
-                if (cmd[3] !== undefined) {
-                    this.vlc.command(host, cmd[3]);
-                    console.log('vlc command on ' + host + ': ');
+                if (cmd.vlc !== undefined) {
+                    this.vlc.command(cmd.host, cmd.vlc);
+                    console.log('vlc command on ' + cmd.host + ': ');
                 } else {
-                    console.log('vlc on ' + host + ': command undefined');
+                    console.log('vlc on ' + cmd.host + ': command undefined');
                 }
             }
             break;
@@ -125,7 +101,7 @@ var pclib = {
             console.log('shutdown ' + host + ": " + data);
         });
     },
-    ping: function(host, callback) {
+    ping: function(host) {
         //DEBUG:console.log('ping host '+host);
         db.getIP(host, function(address) {
             //DEBUG:console.log('host:'+host+",ip:"+address);
@@ -135,41 +111,29 @@ var pclib = {
             shell.cmd(c, function(data) {
                 data = String(data).trim();
                 if (data === '0') {
-                    //DEBUG: console.log("PING: host " + host + ":" + address + " is alive");
-                    if (callback !== undefined) {
-                        callback('alive');
-                    }
+                    process.ioserver.publish('pong', { "host": host, "pong": "alive" });
                 } else {
-                    //DEBUG: console.log("PING: host " + host + ":" + address + " is not alive");
-                    if (callback !== undefined) {
-                        callback('dead');
-                    }
+                    process.ioserver.publish('pong', { "host": host, "pong": "dead" });
                 }
             });
         });
     },
     vlc: {
-        ping: function(host, callback) {
+        ping: function(host) {
             var timeout = 200;
             var s = new net.Socket();
-            var alive = false;
-            s.setTimeout(timeout, function() {
+            s.setTimeout(function() {
                 s.destroy();
-                if (callback !== undefined && alive === false) {
-                    callback('dead');
-                }
-            });
+                console.log('vlc ping timeout');
+                process.ioserver.publish('pong', { "vlc": host, "pong": "dead"});
+            }, timeout);
             s.connect(vlcport, host, function() {
-                alive = true;
-                if (callback !== undefined) {
-                    callback('alive');
-                }
+                console.log('vlc pong ');
+                process.ioserver.publish('pong', { "vlc": host, "pong": "alive"});
             });
             s.on('error', function() {
-                alive = false;
-                if (callback !== undefined) {
-                    callback('dead');
-                }
+                console.log('vlc ping errror');
+                process.ioserver.publish('pong', { "vlc": host, "pong": "dead"});
             });
         },
         start: function(host) {
@@ -196,7 +160,7 @@ var pclib = {
                 console.log('error conneting to vlc on: ' + host);
             });
         },
-        requeststatus: function(host, callback) {
+        requeststatus: function(host) {
             //TODO: dit wordt niks
             var buffer = [];
             var status = {
@@ -204,10 +168,10 @@ var pclib = {
                 position: 0
             };
             /*
-            shell.cmd('echo "status" | nc -q 1 '+host+' 9876', function(data){
-                console.log('shell: ' + data);
-            });
-            */
+               shell.cmd('echo "status" | nc -q 1 '+host+' 9876', function(data){
+               console.log('shell: ' + data);
+               });
+               */
             var s = new net.createConnection(vlcport, host, function() {
                 s.write('get_length\nget_time\nstatus\n');
                 //s.write('get_time\n');
@@ -226,9 +190,11 @@ var pclib = {
                     //DEBUG:
                     console.log(status);
                     s.end();
-                    if (callback) {
-                        callback(status);
-                    }
+                    /*TODO: message
+                      if (callback) {
+                      callback(status);
+                      }
+                      */
                 }
             });
             s.on('end', function(data){
@@ -333,7 +299,7 @@ var pclib = {
 };
 
 process.ioserver.on('pc', function(data) {
-    pclib.command(data.command);
+    pclib.command(data);
 });
 
 module.exports = pclib;

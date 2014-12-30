@@ -1,10 +1,4 @@
 /*jslint todo: true */
-/*TODO: een aparte 'socket-host' maken. dit werkt niet meer samen met pc/nodo libs.
- * de socket-host ontvangt/verstuurd berichten, ook van de logicserver
- * een protokol voor deze berichten bedenken.
- * een publish/subscribe patroon maken waar alle verschillende modules (arduino, pc, nodo, ....) mee communiceren.
- *
- */
 
 module.exports = {
     handlers: {},
@@ -15,7 +9,7 @@ module.exports = {
         this.handlers[message].push(callback);
     },
     publish: function(message, data){
-        //DEBUG:  console.log('Publish message: ' + message); console.log(data);
+        if (process.ioserver.debug) { console.log('Publish message: ' + message); console.log(data); }
         if (this.handlers[message] !== undefined){
             this.handlers[message].forEach(function(handler){
                 handler(data);
@@ -103,7 +97,16 @@ module.exports = {
                         }
                     break;
                     case 'pc':
-                        ret.command = cmd;
+                        ret.host = cmd[1];
+                        ret.command = cmd[2];
+                        if (ret.command === 'vlc') {
+                            if (cmd[3]) {
+                                ret.vlc = cmd[3];
+                            }
+                            if (cmd[4] && ret.vlc) {
+                                ret.file = cmd[4];
+                            }
+                        }
                     break;
                     default:
                         console.log("ERROR: Unknown command: " + data);

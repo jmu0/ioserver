@@ -6,6 +6,12 @@ process.ioserver = require('./ioserver.lib.js');
 process.ioserver.init();
 var linebuffer="";
 
+var arg = process.argv[2];
+if (arg !== undefined && arg === 'debug'){
+    process.ioserver.debug=true;
+    console.log('writing debug messages...');
+}
+
 //create server and listen on port
 net.createServer(function(socket){
         console.log('connected: '+socket.remoteAddress+':'+socket.remotePort);
