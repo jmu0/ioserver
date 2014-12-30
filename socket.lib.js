@@ -319,7 +319,7 @@ process.ioserver.on('update', function(data){
     var logic = socketlib.getDeviceByName('logic');
     if (logic) {
         var sock = socketlib.getSocketByName(logic.socketname);
-        if (sock) { sock.write('update {"device":"'+data.device+'","command":"' + data.command +'"}\n'); }
+        if (sock) { sock.write('update '+ JSON.stringify(data) + '\n'); }
     }
 });
 process.ioserver.on('pong', function(data){
