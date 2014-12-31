@@ -10,12 +10,13 @@ var checkinterval;
 function nodoData(data) {
     if (data[0] !== 10 && data[0]!==13&&data[0]!==33&&data[0]!==62) { //10=line feed,13=carriage return,33=!,62=>
         data = String(data); //data = array met ascii codes
-        console.log('nodo: '+data);
+        if (process.ioserver.debug) { console.log('nodo: '+data); }
         if (data.indexOf('Input') === 0 && data.indexOf('HTTP') === -1) {
             data=data.split('; ');
             data = data[2].split('=')[1];
-            data = data.replace('NewKAKU', 'kaku').replace(',','=');
+            data = data.replace('NewKAKU', 'kaku').replace('kakuSend', 'kaku').replace(',','=');
             data = data.replace(/(\r\n|\n|\r)/gm,"").trim();
+            console.log('NODO event: '+data);
             process.ioserver.publish('event', { iodevice: 'kaku', ioevent: data });
             /*
             logic = process.ioserver.getDeviceByName('logic');
