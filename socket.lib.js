@@ -205,13 +205,14 @@ var socketlib = {
             logic = this.getDeviceByName('logic');
             if (logic) {
                 sock = this.getSocketByName(logic.socketname);
-                sock.write('init ' + name + "\n");
+                sock.write('init {"iodevice":"' + name + '"}\n');
             }
         } else {
             var i; 
             for (i = 0; i < this.devices.length; i++) {
                 if (this.devices[i].name !== 'logic') {
-                    socket.write('init ' + this.devices[i].name + "\n");
+                    sock = this.getSocketByName(logic.socketname);
+                    sock.write('init {"iodevice":"' + this.devices[i].name + '"}\n');
                 }
             }
         }
