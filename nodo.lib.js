@@ -15,6 +15,7 @@ function nodoData(data) {
             data=data.split('; ');
             data = data[2].split('=')[1];
             data = data.replace('NewKAKU', 'kaku').replace(',','=');
+            data = data.replace(/(\r\n|\n|\r)/gm,"").trim();
             process.ioserver.publish('event', { iodevice: 'kaku', ioevent: data });
             /*
             logic = process.ioserver.getDeviceByName('logic');
@@ -70,10 +71,9 @@ var nodolib = {
         nodo.write(data);
     },
     kaku: function(cmd) {
-        var command=cmd.replace("=", ",");
-        command = "newkakusend "+command;
+        var command = "newkakusend " + cmd.iocontrol + "," + cmd.value;
         if (command.substr(command.length -1) !== "\n") { command += "\n"; }
-
+        console.log('KAKU COMMAND: ' + command);
         time=(lastCommand+interval) - Date.now();
         if (time < 1) { time=1;}
         /* DEBUG: 
@@ -88,18 +88,16 @@ var nodolib = {
         setTimeout(function(){
             //DEBUG: console.log('nodo write: ' + command);
             nodo.write(command);
-            cmd = cmd.split("=");
-            process.ioserver.publish('update', { "iodevice": "kaku", "iocontrol": cmd[0], "value": cmd[1] });
+            process.ioserver.publish('update', { "iodevice": "kaku", "iocontrol": cmd.iocontrol, "value": cmd.value });
         }, time);
     }
 };
 connectNodo();
 
 process.ioserver.on('setcontrol', function(data){
-    //DEBUG: console.log('SETCONTROL in kaku lib');
-    //DEBUG: console.log(data);
-    if (data.type === 'kaku') {
-        nodolib.kaku(data.command);
+    //DEBUG:console.log('SETCONTROL in kaku lib'); console.log(data);
+    if (data.iodevice === 'kaku') {
+        nodolib.kaku(data);
     }
 });
 process.ioserver.on('nodo', function(data){

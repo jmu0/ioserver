@@ -52,7 +52,7 @@ module.exports = {
                 try {
                     ret = JSON.parse(json);
                 } catch (error) {
-                    console.log("ERROR: ongeldige json: "+json);
+                    console.log("ERROR ioserver parseDate: invalid json: "+json);
                 }
             } else { //no json, make backwards compatible
                 var cmd = data.split(" ");
@@ -62,15 +62,9 @@ module.exports = {
                         ret.device = cmd[1];
                     break;
                     case 'setcontrol':
-                        if (cmd[1] === 'kaku') {
-                            ret.type='kaku';
-                            ret.device = 'kaku';
-                            ret.command=cmd[2];
-                        } else {
-                            ret.type='socket';
-                            ret.device=cmd[1];
-                            ret.command=cmd[2];
-                        }
+                        ret.iodevice=cmd[1];
+                        ret.iocontrol=cmd[2].split('=')[0];
+                        ret.value=cmd[2].split('=')[1];
                     break;
                     case 'requeststatus':
                         ret.to = cmd[1];
@@ -109,7 +103,7 @@ module.exports = {
                         }
                     break;
                     default:
-                        console.log("ERROR: Unknown command: " + data);
+                        console.log("ERROR ioserver Unknown command: " + data);
                     break;
                 }
             } 

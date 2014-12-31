@@ -23,6 +23,7 @@ net.createServer(function(socket){
                 {
                     commands = linebuffer.split("\n");
                     for (i = 0; i < commands.length; i++) {
+                        if (process.ioserver.debug) { console.log("ioserver incoming command: " + commands[i]); }
                         process.ioserver.doCommand(commands[i], socket);
                     }
                     linebuffer = "";

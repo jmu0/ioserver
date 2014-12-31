@@ -1,21 +1,20 @@
 var socketlib = {
     sockets: [],
     devices: [],
-    setControl: function(device, command, socket) {
-        var dev = this.getDeviceByName(device);
+    setControl: function(iodevice, iocontrol, value, socket) {
+        var dev = this.getDeviceByName(iodevice);
         dev.socket = this.getSocketByName(dev.socketname);
         var line;
         if(dev) {
             if (dev.socket !== undefined) {
-                dev.socket.write("setcontrol " + device + " " +command + "\n");
-                command = command.split('=');
-                process.ioserver.publish('update', { "iodevice": device, "iocontrol": command[0], "value": command[1] });
+                dev.socket.write("setcontrol " + iodevice + " " + iocontrol + "=" + value + "\n");
+                process.ioserver.publish('update', { "iodevice": iodevice, "iocontrol": iocontrol, "value": value });
             } else { 
-                console.log("SOCKET ERROR: " + dev.socketname);
+                console.log("SOCKET ERROR socketlib setcontrol: " + dev.socketname);
             }
         }
         else {
-            line = "ERROR: device '"+device+"' not found.\n";
+            line = "ERROR socketlib.setControl: device '"+iodevice+"' not found.\n";
             console.log(line);
             socket.write(line);
         }
@@ -105,7 +104,7 @@ var socketlib = {
             console.log(line);
         }
         else {
-            line = "ERROR: device '" + to + "' not found.\n";
+            line = "ERROR socketlib requestStatus: device '" + to + "' not found.\n";
             console.log(line);
             var fromdev = this.getDeviceByName(from);
             if (fromdev) {
@@ -128,7 +127,7 @@ var socketlib = {
                 //DEBUG: console.log(line);
             }
             else {
-                line = "ERROR: device '"+ to +"' not found.\n";
+                line = "ERROR socketLib returnStatus: device '"+ to +"' not found.\n";
                 console.log(line);
                 socket.write(line);
             }
@@ -145,7 +144,7 @@ var socketlib = {
             //socket.write(line);
         }
         else {
-            line = "ERROR: device '"+device+"' not found.\n";
+            line = "ERROR socketlib setEvent: device '"+device+"' not found.\n";
             console.log(line);
             socket.write(line);
         }
@@ -161,7 +160,7 @@ var socketlib = {
             //socket.write(line);
         }
         else {
-            line = "ERROR: device '"+device+"' not found.\n";
+            line = "ERROR socketlib resetEvent: device '"+device+"' not found.\n";
             console.log(line);
             if (socket) { socket.write(line); }
         }
@@ -228,7 +227,7 @@ var socketlib = {
                 return 0;
             }
         }
-        console.log("ERROR: remove device: " + name + " not found!");
+        console.log("ERROR socketlib removedevice: " + name + " not found!");
         return 1;
     },
     addSocket: function(socket) {
@@ -294,8 +293,9 @@ process.ioserver.on('devices', function(data) {
     socketlib.printDeviceList(data.socket);
 });
 process.ioserver.on('setcontrol', function(data) {
-    if (data.type==='socket'){
-        socketlib.setControl(data.device, data.command, data.socket);
+    if (data.iodevice !=='kaku'){
+        if (process.ioserver.debug) { console.log('socketlib setcontrol message'); }
+        socketlib.setControl(data.iodevice, data.iocontrol, data.value, data.socket);
     }
 });
 process.ioserver.on('requeststatus', function(data){
@@ -308,11 +308,14 @@ process.ioserver.on('setevent', function(data){
     socketlib.setEvent(data.device, data.event, data.socket);
 });
 process.ioserver.on('resetevent', function(data){
+    if(process.ioserver.debug) { console.log('RESET EVENT:'); console.log(data); }
     socketlib.resetEvent(data.device, data.event, data.socket);
 });
+/* DIT HOEFT NIET???
 process.ioserver.on('event', function(data){
-    socketlib.resetEvent(data.event, data.device);
+    socketlib.event(data.event, data.device);
 });
+*/
 process.ioserver.on('broadcast', function(data){ 
     socketlib.broadcast(data.message);
 });
@@ -340,7 +343,7 @@ process.ioserver.on('event', function(data){
     var logic = socketlib.getDeviceByName('logic');
     if (logic) {
         var sock = socketlib.getSocketByName(logic.socketname);
-        if (sock) { sock.write('pong {"iodevice":"'+data.iodevice + '","ioevent":"' + data.ioevent+'"}\n'); }
+        if (sock) { sock.write('pong {"iodevice":"' + data.iodevice + '","ioevent":"' + data.ioevent + '"}\n'); }
     }
 });
 
