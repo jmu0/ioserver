@@ -209,6 +209,7 @@ var socketlib = {
             }
         } else {
             var i; 
+            logic = this.getDeviceByName('logic');
             for (i = 0; i < this.devices.length; i++) {
                 if (this.devices[i].name !== 'logic') {
                     sock = this.getSocketByName(logic.socketname);
