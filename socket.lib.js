@@ -192,8 +192,9 @@ var socketlib = {
         }
     },
     initDevice: function(name, socket) {
-        var logic, sock;
-        var device = { 'name': name, 'socketname': this.getSocketBySocket(socket).name };
+        var logic;
+        var sock = this.getSocketBySocket(socket);
+        var device = { 'name': name, 'socketname': sock.name };
         var id = this.getDeviceIDByName(name);
         if (id === -1) {
             this.devices[this.devices.length] = device;
@@ -231,13 +232,7 @@ var socketlib = {
         return 1;
     },
     addSocket: function(socket) {
-        socket.setKeepAlive(true);
-        var db = require('./database.js');
-        var ip = socket._peername.address;
-        var port = socket._peername.port;
-        var dit = this;
-        var d;
-        var device = { 'ip':ip,'port':port,'name':ip+":"+port,'socket':socket, 'locked':false };
+        console.log('ADDSOCKET: '); console.log(socket); socket.setKeepAlive(true); var db = require('./database.js'); var ip = socket._peername.address; var port = socket._peername.port; var dit = this; var d; var device = { 'ip':ip,'port':port,'name':ip+":"+port,'socket':socket, 'locked':false };
         db.getHostNameByIP(ip, function(name) {
             //gethostname heeft vertraging. bij connect > init is de socket nog niet toegevoegd. daarom hostname updaten:
             var oldname=ip+":"+port;
@@ -280,11 +275,18 @@ var socketlib = {
         }
     }
 };
+
 process.ioserver.on('init', function(data){
     socketlib.initDevice(data.device, data.socket);
 });
 process.ioserver.on('remove', function(data){
     socketlib.removeDevice(data.device);
+});
+process.ioserver.on('addsocket', function(data){
+    socketlib.addSocket(data.socket);
+});
+process.ioserver.on('removesocket', function(data){
+    socketlib.removeSocket(data.socket);
 });
 process.ioserver.on('sockets', function(data) {
     socketlib.printSocketList(data.socket);

@@ -18,17 +18,6 @@ function nodoData(data) {
             data = data.replace(/(\r\n|\n|\r)/gm,"").trim();
             console.log('NODO event: '+data);
             process.ioserver.publish('event', { iodevice: 'kaku', ioevent: data });
-            /*
-            logic = process.ioserver.getDeviceByName('logic');
-            if (logic) {
-                sock = process.ioserver.getSocketByName(logic.socketname);
-                if (sock) { 
-                    sock.write('event ' + data + "\n"); 
-                }
-            } else {
-                console.log('logic niet gevonden');
-            }
-            */
         }
         /* NODO via telnet een event aan nodo toevoegen:
          * EventlistShow = laat alle events zien
@@ -47,6 +36,7 @@ function connectNodo() {
     nodo.connect(nodoport, nodoname, function(){
         console.log("Connected to: " + nodoname + ":" + nodoport);
         nodo.write('\n');
+        process.ioserver.publish('init', { device: "kaku", socket: this });//initialize kaku 
     });
     nodo.on('data', nodoData);
     nodo.on('error', nodoError);
@@ -56,6 +46,7 @@ function connectNodo() {
     checkinterval = setInterval(function(){
         if (nodo.writable === false) {
             console.log('nodo lost, reconnecting...');
+            process.ioserver.publish('remove', { device: 'kaku' });
             connectNodo();
         }
     }, 2000);
@@ -106,17 +97,3 @@ process.ioserver.on('nodo', function(data){
 });
 
 module.exports = nodolib;
-/*KAKU codes:
- * 1 = een stopcontact
- * 11 = dimmer multi achter tv
- * 12 = dimmer staande lamp
- *
- * 15=lamp kamer 1
- * 16=lamp kamer 2
- *
- * 20=lamp keuken
- *
- */
-
-
-
