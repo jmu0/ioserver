@@ -172,13 +172,13 @@ var socketlib = {
         if (dev) {
             process.ioserver.publish('event', { iodevice: devicename, ioevent: event });
             /*OUD
-            var logic = this.getDeviceByName('logic');
-            if (logic) {
-                sock = this.getSocketByName(logic.socketname);
-                sock.write('event {"iodevice":"' + dev.name + '","event":"' + event + '"}\n');
-            }
-            console.log("Event: " + event + " on " + dev.name);
-            */
+              var logic = this.getDeviceByName('logic');
+              if (logic) {
+              sock = this.getSocketByName(logic.socketname);
+              sock.write('event {"iodevice":"' + dev.name + '","event":"' + event + '"}\n');
+              }
+              console.log("Event: " + event + " on " + dev.name);
+              */
         }
         else {
             console.log("ERROR (event): device '"+dev.name+"' not found.\n");
@@ -312,10 +312,10 @@ process.ioserver.on('resetevent', function(data){
     socketlib.resetEvent(data.device, data.event, data.socket);
 });
 /* DIT HOEFT NIET???
-process.ioserver.on('event', function(data){
-    socketlib.event(data.event, data.device);
-});
-*/
+   process.ioserver.on('event', function(data){
+   socketlib.event(data.event, data.device);
+   });
+   */
 process.ioserver.on('broadcast', function(data){ 
     socketlib.broadcast(data.message);
 });
@@ -335,7 +335,13 @@ process.ioserver.on('pong', function(data){
     var logic = socketlib.getDeviceByName('logic');
     if (logic) {
         var sock = socketlib.getSocketByName(logic.socketname);
-        if (sock) { sock.write('pong {"host":"'+data.host+'","pong":"' + data.pong +'"}\n'); }
+        if (sock) {
+            if (data.vlc){
+                sock.write('pong {"vlc":"' + data.vlc + '","pong":"' + data.pong +'"}\n'); 
+            } else {
+                sock.write('pong {"host":"' + data.host + '","pong":"' + data.pong +'"}\n'); 
+            }
+        }
     }
 });
 process.ioserver.on('event', function(data){
