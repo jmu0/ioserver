@@ -20,9 +20,11 @@ module.exports = {
     pc: undefined, //require('./pc.lib.js'),
     socket: undefined, //require('./socekt.lib.js'),
     init: function(){
-        this.nodo = require('./nodo.lib.js');
-        this.pc = require('./pc.lib.js');
-        this.socket = require('./socket.lib.js');
+        this.dns= require('./lib.dns.js');
+        this.nodo = require('./lib.nodo.js');
+        this.pc = require('./lib.pc.js');
+        this.vlc = require('./lib.vlc.js');
+        this.socket = require('./lib.socket.js');
     },
     doCommand: function(data, socket) {
         //DEBUG: console.log("doCommand: " +data);

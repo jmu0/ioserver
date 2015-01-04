@@ -2,7 +2,7 @@ var net = require('net');
 
 var host = '0.0.0.0';
 var port = 9999;
-process.ioserver = require('./ioserver.lib.js');
+process.ioserver = require('./lib.ioserver.js');
 process.ioserver.init();
 var linebuffer="";
 
