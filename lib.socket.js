@@ -232,8 +232,13 @@ var socketlib = {
         return 1;
     },
     addSocket: function(socket) {
-        console.log('ADDSOCKET: '); console.log(socket); socket.setKeepAlive(true); var db = require('./database.js'); var ip = socket._peername.address; var port = socket._peername.port; var dit = this; var d; var device = { 'ip':ip,'port':port,'name':ip+":"+port,'socket':socket, 'locked':false };
-        db.getHostNameByIP(ip, function(name) {
+        console.log('ADDSOCKET: '); console.log(socket); socket.setKeepAlive(true); 
+        var ip = socket._peername.address; 
+        var port = socket._peername.port; 
+        var dit = this; 
+        var d; 
+        var device = { 'ip':ip,'port':port,'name':ip+":"+port,'socket':socket, 'locked':false };
+        process.ioserver.dns.getHostNameByIP(ip, function(name) {
             //gethostname heeft vertraging. bij connect > init is de socket nog niet toegevoegd. daarom hostname updaten:
             var oldname=ip+":"+port;
             var newname=name+":"+port;
@@ -338,10 +343,10 @@ process.ioserver.on('pong', function(data){
     if (logic) {
         var sock = socketlib.getSocketByName(logic.socketname);
         if (sock) {
-            if (data.vlc){
-                sock.write('pong {"vlc":"' + data.vlc + '","pong":"' + data.pong +'"}\n'); 
+            if (data.vlcHost){
+                sock.write('pong {"vlcHost":"' + data.vlcHost + '","pong":"' + data.pong +'"}\n'); 
             } else {
-                sock.write('pong {"host":"' + data.host + '","pong":"' + data.pong +'"}\n'); 
+                sock.write('pong {"hostname":"' + data.hostname + '","pong":"' + data.pong +'"}\n'); 
             }
         }
     }
