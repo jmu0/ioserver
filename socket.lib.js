@@ -8,7 +8,7 @@ var socketlib = {
         if(dev) {
             if (dev.socket !== undefined) {
                 dev.socket.write("setcontrol " + iodevice + " " + iocontrol + "=" + value + "\n");
-                process.ioserver.publish('update', { "iodevice": iodevice, "iocontrol": iocontrol, "value": value });
+                process.ioserver.publish('updatecontrol', { "iodevice": iodevice, "iocontrol": iocontrol, "value": value });
             } else { 
                 console.log("SOCKET ERROR socketlib setcontrol: " + dev.socketname);
             }
@@ -324,12 +324,12 @@ process.ioserver.on('broadcast', function(data){
 
 
 
-process.ioserver.on('update', function(data){
+process.ioserver.on('updatecontrol', function(data){
     //send update command to logicserver
     var logic = socketlib.getDeviceByName('logic');
     if (logic) {
         var sock = socketlib.getSocketByName(logic.socketname);
-        if (sock) { sock.write('update '+ JSON.stringify(data) + '\n'); }
+        if (sock) { sock.write('updatecontrol '+ JSON.stringify(data) + '\n'); }
     }
 });
 process.ioserver.on('pong', function(data){
@@ -351,7 +351,7 @@ process.ioserver.on('event', function(data){
     var logic = socketlib.getDeviceByName('logic');
     if (logic) {
         var sock = socketlib.getSocketByName(logic.socketname);
-        if (sock) { sock.write('pong {"iodevice":"' + data.iodevice + '","ioevent":"' + data.ioevent + '"}\n'); }
+        if (sock) { sock.write('event {"iodevice":"' + data.iodevice + '","ioevent":"' + data.ioevent + '"}\n'); }
     }
 });
 

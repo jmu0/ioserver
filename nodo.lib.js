@@ -80,7 +80,7 @@ var nodolib = {
         setTimeout(function(){
             //DEBUG: console.log('nodo write: ' + command);
             nodo.write(command);
-            process.ioserver.publish('update', { "iodevice": "kaku", "iocontrol": cmd.iocontrol, "value": cmd.value });
+            process.ioserver.publish('updatecontrol', { "iodevice": "kaku", "iocontrol": cmd.iocontrol, "value": cmd.value });
         }, time);
     }
 };
