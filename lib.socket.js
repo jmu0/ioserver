@@ -365,6 +365,13 @@ process.ioserver.on('vlclength', function(data){
         if (sock) { sock.write('vlclength ' + JSON.stringify(data)); }
     }
 });
+process.ioserver.on('vlcplaying', function(data){
+    var logic = socketlib.getDeviceByName('logic');
+    if (logic) {
+        var sock = socketlib.getSocketByName(logic.socketname);
+        if (sock) { sock.write('vlcplaying ' + JSON.stringify(data)); }
+    }
+});
 process.ioserver.on('event', function(data){
     //send update command to logicserver
     var logic = socketlib.getDeviceByName('logic');

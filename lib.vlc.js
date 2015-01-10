@@ -112,6 +112,39 @@ var vlclib = {
         s.on('error', function() {
             console.log('ERROR get length: cannot connetto vlc on: ' + data.hostname);
         });
+    },
+    playing: function(data) {
+        var s = new net.Socket();
+        var that = this;
+        s.connect(this.port, data.hostname, function() {
+            s.write('is_playing\n');
+        });
+        s.on('data', function(ret) {
+            ret = String(ret);
+            ret = ret.split("\n");
+            var isCommand = true;
+            ret.forEach(function(cmd){
+                cmd = cmd.replace('>', '').trim();
+                isCommand = true;
+                if (cmd.length > 0) {
+                    that.ignore.forEach(function(ign) {
+                        if (cmd.substr(0, ign.length) === ign) {
+                            isCommand = false;
+                        }
+                    });
+                    if (isCommand === true) {
+                        process.ioserver.publish('vlcplaying', {
+                            playing: cmd,
+                            hostname: data.hostname
+                        });
+                        s.destroy();
+                    }
+                }
+            });
+        });
+        s.on('error', function() {
+            console.log('ERROR get length: cannot connetto vlc on: ' + data.hostname);
+        });
     }
 };
 
@@ -126,6 +159,8 @@ process.ioserver.on('vlc', function(data) {
         vlclib.time(data);
     } else if (data.vlc === 'length') {
         vlclib.length(data);
+    } else if (data.vlc === 'playing') {
+        vlclib.playing(data);
     } else {
         vlclib.command(data);
     }
