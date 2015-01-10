@@ -351,6 +351,20 @@ process.ioserver.on('pong', function(data){
         }
     }
 });
+process.ioserver.on('vlctime', function(data){
+    var logic = socketlib.getDeviceByName('logic');
+    if (logic) {
+        var sock = socketlib.getSocketByName(logic.socketname);
+        if (sock) { sock.write('vlctime ' + JSON.stringify(data)); }
+    }
+});
+process.ioserver.on('vlclength', function(data){
+    var logic = socketlib.getDeviceByName('logic');
+    if (logic) {
+        var sock = socketlib.getSocketByName(logic.socketname);
+        if (sock) { sock.write('vlclength ' + JSON.stringify(data)); }
+    }
+});
 process.ioserver.on('event', function(data){
     //send update command to logicserver
     var logic = socketlib.getDeviceByName('logic');
