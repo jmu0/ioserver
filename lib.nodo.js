@@ -25,6 +25,11 @@ function nodoData(data) {
          * EventlistWrite; WildCard ALL,ALL; EventSend HTTP
          * dan komen alle events hier binnen.
          * om ir signalen te ontvangen: RawSignalReceive On
+         * om ir signalen op te slaan: RawSignalWrite On
+         * rawsignallist = lijst met signalen
+         * rawsignalerase * =lijst leegmaken
+         * rawsignalerase [hex] = 1 rawsignal wissen
+         * output [ir,rf],[on,off]
          */
     }
 }

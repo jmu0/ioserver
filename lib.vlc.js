@@ -1,8 +1,42 @@
 /*jslint todo: true */
 
-var vlcport = 9876;
 var net = require('net');
 
+var vlclib = {
+    port: 9876,
+    user: 'jos',
+    start: function(data) {
+        if (process.ioserver.debug) { console.log('START VLC'); }
+        var c = "ssh " + this.user + "@" + data.hostname + " \"";
+        c += data.vlcStartCommand + "\"";
+        process.ioserver.pc.shell.cmd(c);
+    },
+    kill: function(data) {
+        if (process.ioserver.debug) { console.log('KILL VLC'); }
+        var c = "ssh " + this.user + "@" + data.hostname + " \"" + data.vlcKillCommand + "\"";
+        process.ioserver.pc.shell.cmd(c);
+    },
+    command: function(host, command) {
+        host.translate.forEach(function(item) {
+            command = command.replace(item.from, item.to);
+        });
+        var s = new net.createConnection(this.port, host, function() {
+            s.write(command);
+            s.end();
+        });
+        s.on('error', function() {
+            console.log('error conneting to vlc on: ' + host);
+        });
+    },
+};
+
+process.ioserver.on('vlc', function(data){
+    if (data.vlc === 'start') {
+        vlclib.start(data);
+    } else if (data.vlc === 'kill') {
+        vlclib.kill(data);
+    }
+});
 process.ioserver.on('ping', function(data){
     if (data.vlcHost) {
         //DEBUG: console.log('VLC PINGING: '+data.vlcHost);
@@ -20,7 +54,7 @@ process.ioserver.on('ping', function(data){
                 });
             }
         }, timeout);
-        s.connect(vlcport, data.vlcHost, function() {
+        s.connect(vlclib.port, data.vlcHost, function() {
             //DEBUG: console.log('VLC PING CONNECT: '+data.vlcHost);
             process.ioserver.publish('pong', {
                 "vlcHost": data.vlcHost,
@@ -41,30 +75,7 @@ process.ioserver.on('ping', function(data){
     }
 });
 
-var vlclib = {
-    start: function(host) {
-        var c = "ssh " + this.user + "@" + host.hostname + " \"export DISPLAY=:0.0; ";
-        c += host.vlcStartCommand + "\"";
-        process.ioserver.pc.shell.cmd(c);
 
-    },
-    kill: function(host) {
-        var c = "ssh " + this.user + "@" + host.host + " \"" + host.vlcKillCommand + "\"";
-        process.ioserver.pc.shell.cmd(c);
-    },
-    command: function(host, command) {
-        host.translate.forEach(function(item) {
-            command = command.replace(item.from, item.to);
-        });
-        var s = new net.createConnection(vlcport, host, function() {
-            s.write(command);
-            s.end();
-        });
-        s.on('error', function() {
-            console.log('error conneting to vlc on: ' + host);
-        });
-    },
-};
 /*
             case 'vlc':
                 if (cmd.vlc === 'start') {
