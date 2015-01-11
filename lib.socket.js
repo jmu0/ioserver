@@ -109,7 +109,7 @@ var socketlib = {
             var fromdev = this.getDeviceByName(from);
             if (fromdev) {
                 fromdev.socket = this.getSocketByName(fromdev.socketname);
-                fromdev.socket.write(line);
+                fromdev.socket.write(line+"\n");
             }
         }
     },
@@ -119,7 +119,7 @@ var socketlib = {
         var ret = this.getSocketBySocket(socket);
         var line;
         if (dev) {
-            dev.socket.write("returnstatus " + status);
+            dev.socket.write("returnstatus " + status + "\n");
             //DEBUG: console.log(status);
         } else {
             if (to === "this" || to === "server") {
@@ -129,7 +129,7 @@ var socketlib = {
             else {
                 line = "ERROR socketLib returnStatus: device '"+ to +"' not found.\n";
                 console.log(line);
-                socket.write(line);
+                socket.write(line + "\n");
             }
         }
     },
@@ -146,7 +146,7 @@ var socketlib = {
         else {
             line = "ERROR socketlib setEvent: device '"+device+"' not found.\n";
             console.log(line);
-            socket.write(line);
+            socket.write(line + "\n");
         }
     },
     resetEvent: function(device, event, socket) {
@@ -162,7 +162,7 @@ var socketlib = {
         else {
             line = "ERROR socketlib resetEvent: device '"+device+"' not found.\n";
             console.log(line);
-            if (socket) { socket.write(line); }
+            if (socket) { socket.write(line + "\n"); }
         }
     },
     event: function(event, devicename) {
@@ -188,7 +188,7 @@ var socketlib = {
         var s;
         for(s=0; s < this.sockets.length; s++) {
             console.log("broadcast: "+data+"\n");
-            this.sockets[s].write("broadcast: "+data);
+            this.sockets[s].write("broadcast: "+data + "\n");
         }
     },
     initDevice: function(name, socket) {
@@ -254,7 +254,7 @@ var socketlib = {
             }
         });
         device.write=function(data) {
-            this.socket.write(data);
+            this.socket.write(data + "\n");
         };
         for (d = 0; d < dit.sockets.length; d++) {
             if ((dit.sockets[d].ip === ip) && (dit.sockets[d].port === port)) {
@@ -355,21 +355,21 @@ process.ioserver.on('vlctime', function(data){
     var logic = socketlib.getDeviceByName('logic');
     if (logic) {
         var sock = socketlib.getSocketByName(logic.socketname);
-        if (sock) { sock.write('vlctime ' + JSON.stringify(data)); }
+        if (sock) { sock.write('vlctime ' + JSON.stringify(data) + "\n"); }
     }
 });
 process.ioserver.on('vlclength', function(data){
     var logic = socketlib.getDeviceByName('logic');
     if (logic) {
         var sock = socketlib.getSocketByName(logic.socketname);
-        if (sock) { sock.write('vlclength ' + JSON.stringify(data)); }
+        if (sock) { sock.write('vlclength ' + JSON.stringify(data) + "\n"); }
     }
 });
 process.ioserver.on('vlcplaying', function(data){
     var logic = socketlib.getDeviceByName('logic');
     if (logic) {
         var sock = socketlib.getSocketByName(logic.socketname);
-        if (sock) { sock.write('vlcplaying ' + JSON.stringify(data)); }
+        if (sock) { sock.write('vlcplaying ' + JSON.stringify(data) + "\n"); }
     }
 });
 process.ioserver.on('event', function(data){
