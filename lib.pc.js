@@ -7,7 +7,7 @@ var pclib = {
         callback: undefined,
         cmd: function(cmd, callback) {
             var Callback = callback;
-            if (process.ioserver.debug) { console.log('pc shell: ' + cmd); }
+            if (process.ioserver.debug) { console.log('lib.pc: pc shell: ' + cmd); }
             process.ioserver.pc.shell.exec(cmd, function(error, stdout, stderr) {
                 if (error) {
                     error = 0;
@@ -21,9 +21,9 @@ var pclib = {
             });
         },
         puts: function(error, stdout, stderr) {
-            console.log("pc error: " + error);
-            console.log('pc stdout: ' + stdout);
-            console.log('pc stderro: ' + stderr);
+            console.log("lib.pc: pc error: " + error);
+            console.log('lib.pc: pc stdout: ' + stdout);
+            console.log('lib.pc: pc stderro: ' + stderr);
             return stdout;
         }
     }
@@ -55,20 +55,21 @@ process.ioserver.on('ping', function(data) {
 
 process.ioserver.on('wake', function(data) {
     //NOTE: install 'wol' on server
-    if (process.ioserver.debug) { console.log('PC WAKE: '); console.log(data); }
+    if (process.ioserver.debug) { console.log('lib.pc: PC WAKE: '); console.log(data); }
     if (data.mac !== undefined) {
         process.ioserver.pc.shell.cmd('wol ' + data.mac, function(ret) {
-            console.log('wol ' + data.hostname + ": " + String(ret).trim());
+            console.log('lib.pc: wol ' + data.hostname + ": " + String(ret).trim());
         });
     } else {
-        console.log("pc wakeonlan: no mac adres");
+        console.log("lib.pc: pc wakeonlan: no mac adres");
     }
 });
 
 process.ioserver.on('shutdown', function(data) {
     var c = "ssh " + pclib.user + "@" + data.hostname + " \"" + data.shutdownCommand + "\"";
+    console.log('lib.pc: shell command: ' + c);
     process.ioserver.pc.shell.cmd(c, function(ret) {
-        console.log('shutdown ' + data.hostname + ": " + ret);
+        console.log('lib.pc: shutdown ' + data.hostname + ": " + ret);
     });
 });
 

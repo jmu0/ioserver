@@ -8,7 +8,7 @@ var vlclib = {
     ignore: ['VLC', '>', 'Command'],
     start: function(data) {
         if (process.ioserver.debug) {
-            console.log('START VLC');
+            console.log('lib.vlc: START VLC');
         }
         var c = "ssh " + this.user + "@" + data.hostname + " \"";
         c += data.vlcStartCommand + "\"";
@@ -16,20 +16,20 @@ var vlclib = {
     },
     kill: function(data) {
         if (process.ioserver.debug) {
-            console.log('KILL VLC');
+            console.log('lib.vlc: KILL VLC');
         }
         var c = "ssh " + this.user + "@" + data.hostname + " \"" + data.vlcKillCommand + "\"";
         process.ioserver.pc.shell.cmd(c);
     },
     play: function(data) {
-        console.log("VLC play " + data.file + " on " + data.hostname);
+        console.log("lib.vlc: VLC play " + data.file + " on " + data.hostname);
         var s = new net.Socket();
         s.connect(this.port, data.hostname, function() {
             s.write("add " + data.file + '\n');
             s.destroy();
         });
         s.on('error', function() {
-            console.log('ERROR vlc command: cannot connect to vlc on: ' + data.hostname);
+            console.log('lib.vlc: ERROR vlc command: cannot connect to vlc on: ' + data.hostname);
         });
     },
     command: function(data) {
@@ -39,11 +39,11 @@ var vlclib = {
             s.destroy();
         });
         s.on('error', function() {
-            console.log('ERROR vlc command: cannot connect to vlc on: ' + data.hostname);
+            console.log('lib.vlc: ERROR vlc command: cannot connect to vlc on: ' + data.hostname);
         });
     },
     time: function(data) {
-        console.log("VLC get time on: " + data.hostname);
+        console.log("lib.vlc: VLC get time on: " + data.hostname);
         var s = new net.Socket();
         var that = this;
         s.connect(this.port, data.hostname, function() {
@@ -51,7 +51,7 @@ var vlclib = {
         });
         s.on('data', function(ret) {
             ret = String(ret);
-            console.log('vlc data:'); console.log(ret);
+            console.log('lib.vlc: vlc data:'); console.log(ret);
             ret = ret.split("\n");
             var isCommand = true;
             ret.forEach(function(cmd){
@@ -60,12 +60,12 @@ var vlclib = {
                 if (cmd.length > 0) {
                     that.ignore.forEach(function(ign) {
                         if (cmd.substr(0, ign.length) === ign) {
-                            console.log('false');
+                            console.log('lib.vlc: false');
                             isCommand = false;
                         }
                     });
                     if (isCommand === true) {
-                        console.log('VLC TIME ['+cmd+']');
+                        console.log('lib.vlc: VLC TIME ['+cmd+']');
                         process.ioserver.publish('vlctime', {
                             time: cmd,
                             hostname: data.hostname
@@ -76,7 +76,7 @@ var vlclib = {
             });
         });
         s.on('error', function() {
-            console.log('ERROR get time: cannot connet to vlc on: ' + data.hostname);
+            console.log('lib.vlc: ERROR get time: cannot connet to vlc on: ' + data.hostname);
         });
 
     },
@@ -110,7 +110,7 @@ var vlclib = {
             });
         });
         s.on('error', function() {
-            console.log('ERROR get length: cannot connetto vlc on: ' + data.hostname);
+            console.log('lib.vlc: ERROR get length: cannot connetto vlc on: ' + data.hostname);
         });
     },
     playing: function(data) {
@@ -143,7 +143,7 @@ var vlclib = {
             });
         });
         s.on('error', function() {
-            console.log('ERROR get length: cannot connetto vlc on: ' + data.hostname);
+            console.log('lib.vlc: ERROR get length: cannot connetto vlc on: ' + data.hostname);
         });
     }
 };

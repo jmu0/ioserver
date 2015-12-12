@@ -10,11 +10,11 @@ var socketlib = {
                 dev.socket.write("setcontrol " + iodevice + " " + iocontrol + "=" + value + "\n");
                 process.ioserver.publish('updatecontrol', { "iodevice": iodevice, "iocontrol": iocontrol, "value": value });
             } else { 
-                console.log("SOCKET ERROR socketlib setcontrol: " + dev.socketname);
+                console.log("lib.socket: SOCKET ERROR socketlib setcontrol: " + dev.socketname);
             }
         }
         else {
-            line = "ERROR socketlib.setControl: device '"+iodevice+"' not found.\n";
+            line = "lib.socket: ERROR socketlib.setControl: device '"+iodevice+"' not found.\n";
             console.log(line);
             socket.write(line);
         }
@@ -79,7 +79,7 @@ var socketlib = {
     printSocketList: function(socket) {
         var d,line;
         for(d=0; d < this.sockets.length; d++) {
-            line = "socket name: " + this.sockets[d].name + ", ip: " + this.sockets[d].ip;
+            line = "lib.socket: socket name: " + this.sockets[d].name + ", ip: " + this.sockets[d].ip;
             line += ", port: " + this.sockets[d].port;
             console.log(line);
             socket.write(line + "\n");
@@ -88,7 +88,7 @@ var socketlib = {
     printDeviceList: function(socket) {
         var d,line;
         for(d=0; d < this.devices.length; d++) {
-            line = "device name: " + this.devices[d].name + ", socketname: " + this.devices[d].socketname;
+            line = "lib.socket: device name: " + this.devices[d].name + ", socketname: " + this.devices[d].socketname;
             console.log(line);
             socket.write(line + "\n");
         }
@@ -96,15 +96,14 @@ var socketlib = {
     requestStatus: function(to, from) {
         var dev = this.getDeviceByName(to);
         dev.socket = this.getSocketByName(dev.socketname);
-        //DEBUG: console.log(dev);
         var line;
         if(dev) {
             dev.socket.write("requeststatus " + to + " " + from + "\n");
-            line = "Status request sent to: " + dev.name + ", from: " + from + "\n";
+            line = "lib.socket: Status request sent to: " + dev.name + ", from: " + from + "\n";
             console.log(line);
         }
         else {
-            line = "ERROR socketlib requestStatus: device '" + to + "' not found.\n";
+            line = "lib.socket: ERROR socketlib requestStatus: device '" + to + "' not found.\n";
             console.log(line);
             var fromdev = this.getDeviceByName(from);
             if (fromdev) {
@@ -120,14 +119,13 @@ var socketlib = {
         var line;
         if (dev) {
             dev.socket.write("returnstatus " + status + "\n");
-            //DEBUG: console.log(status);
         } else {
             if (to === "this" || to === "server") {
                 line = '{"name":"'+ret.name+'","status":'+status+'}';
                 //DEBUG: console.log(line);
             }
             else {
-                line = "ERROR socketLib returnStatus: device '"+ to +"' not found.\n";
+                line = "lib.socket: ERROR socketLib returnStatus: device '"+ to +"' not found.\n";
                 console.log(line);
                 socket.write(line + "\n");
             }
@@ -139,12 +137,12 @@ var socketlib = {
         var line;
         if(dev) {
             dev.socket.write("setevent " + device + " " + event + "\n");
-            line = "Set event: '"+event+"' on: "+device+"\n";
+            line = "lib.socket: Set event: '"+event+"' on: "+device+"\n";
             console.log(line);
             //socket.write(line);
         }
         else {
-            line = "ERROR socketlib setEvent: device '"+device+"' not found.\n";
+            line = "lib.socket: ERROR socketlib setEvent: device '"+device+"' not found.\n";
             console.log(line);
             socket.write(line + "\n");
         }
@@ -155,12 +153,12 @@ var socketlib = {
         var line;
         if(dev) { 
             dev.socket.write("resetevent " + device + " " + event + "\n");
-            line = "Reset event: '"+event+"' on: "+device+"\n";
+            line = "lib.socket: Reset event: '"+event+"' on: "+device+"\n";
             console.log(line);
             //socket.write(line);
         }
         else {
-            line = "ERROR socketlib resetEvent: device '"+device+"' not found.\n";
+            line = "lib.socket: ERROR socketlib resetEvent: device '"+device+"' not found.\n";
             console.log(line);
             if (socket) { socket.write(line + "\n"); }
         }
@@ -181,13 +179,13 @@ var socketlib = {
               */
         }
         else {
-            console.log("ERROR (event): device '"+dev.name+"' not found.\n");
+            console.log("lib.socket: ERROR (event): device '"+dev.name+"' not found.\n");
         }
     },
     broadcast: function(data) {
         var s;
         for(s=0; s < this.sockets.length; s++) {
-            console.log("broadcast: "+data+"\n");
+            console.log("lib.socket: broadcast: "+data+"\n");
             this.sockets[s].write("broadcast: "+data + "\n");
         }
     },
@@ -217,22 +215,22 @@ var socketlib = {
                 }
             }
         }
-        console.log("initialized " + name);
+        console.log("lib.socket: initialized " + name);
     },
     removeDevice: function(name) {
         var i;
         for (i = 0; i < this.devices.length; i++) {
             if (this.devices[i].name === name) {
                 this.devices.splice(i,1);
-                console.log("removed " + name);
+                console.log("lib.socket: removed " + name);
                 return 0;
             }
         }
-        console.log("ERROR socketlib removedevice: " + name + " not found!");
+        console.log("lib.socket: ERROR socketlib removedevice: " + name + " not found!");
         return 1;
     },
     addSocket: function(socket) {
-        console.log('ADDSOCKET: '); console.log(socket); socket.setKeepAlive(true); 
+        console.log('lib.socket: ADDSOCKET: '); console.log(socket); socket.setKeepAlive(true); 
         var ip = socket._peername.address; 
         var port = socket._peername.port; 
         var dit = this; 
@@ -301,7 +299,7 @@ process.ioserver.on('devices', function(data) {
 });
 process.ioserver.on('setcontrol', function(data) {
     if (data.iodevice !=='kaku'){
-        if (process.ioserver.debug) { console.log('socketlib setcontrol message'); }
+        if (process.ioserver.debug) { console.log('lib.socket: socketlib setcontrol message'); }
         socketlib.setControl(data.iodevice, data.iocontrol, data.value, data.socket);
     }
 });
@@ -315,7 +313,7 @@ process.ioserver.on('setevent', function(data){
     socketlib.setEvent(data.device, data.event, data.socket);
 });
 process.ioserver.on('resetevent', function(data){
-    if(process.ioserver.debug) { console.log('RESET EVENT:'); console.log(data); }
+    if(process.ioserver.debug) { console.log('lib.socket: RESET EVENT:'); console.log(data); }
     socketlib.resetEvent(data.device, data.event, data.socket);
 });
 /* DIT HOEFT NIET???

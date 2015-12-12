@@ -9,7 +9,9 @@ module.exports = {
         this.handlers[message].push(callback);
     },
     publish: function(message, data){
-        if (process.ioserver.debug) { console.log('Publish message: ' + message); console.log(data); }
+        if (process.ioserver.debug) { 
+            console.log('lib.ioserver: Publish message: ' + message); 
+        }
         if (this.handlers[message] !== undefined){
             this.handlers[message].forEach(function(handler){
                 handler(data);
@@ -27,7 +29,6 @@ module.exports = {
         this.socket = require('./lib.socket.js');
     },
     doCommand: function(data, socket) {
-        //DEBUG: console.log("doCommand: " +data);
         var cmd = this.parseCmd(data);
         data = this.parseData(data,socket);
         if (cmd.length > 0) {
@@ -45,16 +46,13 @@ module.exports = {
         var ret = {};
         if ((data.length > 0) && (data !== "\r\n")){
             data = data.replace(/(\r\n|\n|\r)/gm,"").trim();
-            //DEBUG: console.log(data);
             var firstspace = data.indexOf(' ');
-            //DEBUG console.log("firstspace: " + firstspace + " eerste:" + data.substr(firstspace + 1, 1));
             if (data.substr(firstspace + 1, 1) === "{") { //is json
                 var json = data.substr(firstspace + 1);
-                //DEBUG console.log("json: :" + json + ":");
                 try {
                     ret = JSON.parse(json);
                 } catch (error) {
-                    console.log("ERROR ioserver parseDate: invalid json: "+json);
+                    console.log("lib.ioserver: ERROR ioserver parseDate: invalid json: "+json);
                 }
             } else { //no json, make backwards compatible
                 var cmd = data.split(" ");
@@ -105,7 +103,7 @@ module.exports = {
                         }
                     break;
                     default:
-                        console.log("ERROR ioserver Unknown command: " + data);
+                        console.log("lib.ioserver: ERROR ioserver Unknown command: (" + data + ")");
                     break;
                 }
             } 
